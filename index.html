@@ -4,34 +4,37 @@
     <title>jQuery Creative assignment</title>
     <style>
         .full {
-            height: 100vh;
-            width: 100vw;
-            background-color: rgba(230, 230, 230, .3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+          height: 100vh;
+          width: 100vw;
+          background-color: rgba(230, 230, 230, .3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .container {
-            min-width: 200px;
-            min-height: 200px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            border: 1px solid #aaa;
-            margin-left: 20px;
+          padding: 20px;
+          min-width: 200px;
+          min-height: 200px;
+          background-color: #ffffff;
+          border-radius: 10px;
+          border: 1px solid #aaa;
+          margin-left: 20px;
         }
 
         .container:first-of-type {
             margin-left: 0px;
         }
+
+        .header-image {
+          max-width: 200px;
+        }
     </style>
-    <link rel="stylesheet" href="./normalize.css">
+    <link rel="stylesheet" href="./public/css/normalize.css">
 </head>
 
 <body>
-    <div class="full">
-        <div class="container"></div>
-        <div class="container"></div>
+    <div class="full" id="content">
     </div>
     <script src="http://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
         crossorigin="anonymous"></script>
@@ -45,33 +48,40 @@
             });
         }
         function queryYelp(coordinates) {
-            const API_KEY = 'tCeMwDFdgvQGdPzyw-ywWfZdm8cniioL84F5WxA_XExa1m38B7NTN2b3niF2jZkYgpzBQA-zQx9IBng29N8d-JDsKv9th4R0oaaFDlp5CX3gALXzJxxUMp12NKK2W3Yx';
             const lat = coordinates.latitude;
             const long = coordinates.longitude;
-            console.log('lat', lat);
-            console.log('long', long);
-            const url = `https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${long}&radius=8046`;
             return new Promise((resolve, reject) => {
                 $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'jsonp',
-                    success: data => { console.log(data); },
-                    error: err => { console.log(err); },
-                    beforeSend: (xhr) => {
-                        xhr.setRequestHeader('Authorization', `bearer ${API_KEY}`);
-                    }
+                    url: '/restaurants',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { lat, long },
+                    success: data => { resolve(data.businesses) },
+                    error: err => { reject(err); },
                 });
-                resolve('fake data');
-                // TODO query yelp
             });
         }
         $(document).ready(function () {
             // TODO loading screen
+            const content = $('#content');
+            let loading = '';
+            loading += '<section class="container">loading...</section>';
+            content.html(loading);
             loadGeoLocation()
-                .then((position) => queryYelp(position.coords))
+                .then(position => queryYelp(position.coords))
                 .then(restaurants => {
-                    console.log(restaurants);
+                    content.html('');
+                    for (let i = 0; i < 3; i += 1) {
+                      const randomNum = Math.floor(Math.random() * Math.floor(restaurants.length));
+                      const restaurant = restaurants[randomNum];
+                      let container = '';
+                      container += '<section class="container">';
+                      container += `<h1>${restaurant.name}</h1>`;
+                      container += `<a href="tel:${restaurant.phone}">${restaurant.display_phone}</a>`;
+                      container += `<p>Price: ${restaurant.price}</p>`;
+                      container += '</section>';
+                      content.append(container);
+                    }
                 });
         });
     </script>
